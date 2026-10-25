@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adıyaman Gölbaşı Yöresel Sözlüğü</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-amber-50/50 text-slate-800 min-h-screen flex flex-col antialiased">
+
+    <!-- Header -->
+    <header class="bg-amber-900 text-amber-50 shadow-lg border-b border-amber-800 sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-800 flex items-center justify-center text-amber-200 border border-amber-700/60 shadow-inner font-bold text-lg">
+                    📖
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">Adıyaman Gölbaşı Sözlüğü</h1>
+                    <p class="text-xs text-amber-300/80 font-medium">Yöresel Dil ve Kültür Mirası</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <button onclick="toggleVoiceMode()" id="voice-mode-btn" class="px-3 py-2 rounded-lg bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold border border-amber-700 transition flex items-center gap-1 shadow-sm">
+                    <span id="voice-icon">👴🏼</span> <span id="voice-mode-text">Ses: Yaşlı Dede Modu</span>
+                </button>
+                <button onclick="openAddModal()" class="px-3 py-2 rounded-lg bg-amber-800 hover:bg-amber-700 text-amber-100 text-xs font-semibold border border-amber-700 transition flex items-center gap-1 shadow-sm">
+                    ➕ <span>Kelime Ekle</span>
+                </button>
+                <button onclick="openQuizModal()" class="px-3 py-2 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-semibold transition flex items-center gap-1 shadow-sm">
+                    🎮 <span>Sözcük Avı</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <!-- Dede Banner -->
+        <div class="bg-gradient-to-r from-amber-100 via-amber-50 to-orange-100 rounded-2xl p-5 md:p-6 border border-amber-200 shadow-sm flex flex-col md:flex-row items-center gap-5 relative overflow-hidden">
+            <div id="banner-avatar" class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-amber-200/80 border-2 border-amber-400 flex items-center justify-center text-amber-800 text-4xl shrink-0 shadow-inner">
+                👴🏼
+            </div>
+            <div class="space-y-2 text-center md:text-left flex-grow">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-200/60 text-amber-900 text-xs font-bold uppercase tracking-wider">
+                    💬 <span id="banner-title">Gölbaşı Dedesi Diyor Ki</span>
+                </div>
+                <p id="daily-quote" class="text-slate-700 font-medium text-sm md:text-base leading-relaxed italic">
+                    "Zaar akşama yağmur yağacak, bulutlar toplanmaya başladı oğlum."
+                </p>
+                <div class="pt-1 flex flex-wrap items-center justify-center md:justify-start gap-3">
+                    <button onclick="speakText(document.getElementById('daily-quote').innerText)" class="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-900 hover:text-amber-700 bg-white/80 hover:bg-white px-3.5 py-1.5 rounded-md border border-amber-200 transition shadow-xs">
+                        🔊 <span>Dededen Dinle</span>
+                    </button>
+                    <span id="word-count" class="text-xs text-slate-500 font-medium"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls: Search, Category & Köy Filtreleri -->
+        <div class="space-y-3">
+            <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div class="relative w-full sm:w-80">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+                    <input type="text" id="search-input" oninput="filterWords()" placeholder="Kelime, anlam veya köy ara..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition shadow-xs">
+                </div>
+
+                <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+                    <button onclick="setCategory('all')" id="btn-all" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900 text-white shadow-xs">Tümü</button>
+                    <button onclick="setCategory('favs')" id="btn-favs" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-rose-700 border border-slate-200 hover:bg-rose-50 flex items-center gap-1">
+                        ❤️ Favorilerim
+                    </button>
+                    <button onclick="setCategory('kelime')" id="btn-kelime" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Kelimeler</button>
+                    <button onclick="setCategory('deyim')" id="btn-deyim" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Deyim & Ünlem</button>
+                    <button onclick="setCategory('atasozu')" id="cat-atasozu" class="cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">Nesne & Araçlar</button>
+                </div>
+            </div>
+
+            <!-- Köy / Mahalle Filtre Şeridi -->
+            <div class="flex items-center gap-2 overflow-x-auto pt-1 pb-1 text-xs">
+                <span class="font-bold text-amber-900 whitespace-nowrap">📍 Köy / Yöre:</span>
+                <button onclick="setVillage('all')" id="vbtn-all" class="vcat-btn px-2.5 py-1 rounded-md bg-amber-200/80 text-amber-900 font-semibold shadow-xs">Tüm Köyler</button>
+                <button onclick="setVillage('Gölbaşı Merkez')" id="vbtn-merkez" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Gölbaşı Merkez</button>
+                <button onclick="setVillage('Harmanlı')" id="vbtn-harmanli" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Harmanlı</button>
+                <button onclick="setVillage('Belören')" id="vbtn-beloren" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Belören</button>
+                <button onclick="setVillage('Cankara')" id="vbtn-cankara" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Cankara</button>
+                <button onclick="setVillage('Yarbaşı')" id="vbtn-yarbasi" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Yarbaşı</button>
+                <button onclick="setVillage('Ozan')" id="vbtn-ozan" class="vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50">Ozan</button>
+            </div>
+        </div>
+
+        <!-- Word Grid -->
+        <div id="word-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- JavaScript ile doldurulacak -->
+        </div>
+
+        <div id="empty-state" class="hidden text-center py-12 bg-white rounded-2xl border border-dashed border-slate-200">
+            <p class="text-slate-500 font-medium text-sm">Aradığınız kriterlere uygun kelime bulunamadı.</p>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-4 text-center border-t border-slate-800">
+        <p>Adıyaman Gölbaşı Yerel Sözlük Çalışması &copy; 2026</p>
+    </footer>
+
+    <!-- Add Modal -->
+    <div id="add-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-slate-800 text-base">Sözlüğe Yeni Kelime Ekle</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <form onsubmit="handleAddWord(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Yöresel Kelime/Deyim</label>
+                    <input type="text" id="add-local" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Güncel Türkçe Karşılığı</label>
+                    <input type="text" id="add-standard" required class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori</label>
+                        <select id="add-category" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                            <option value="kelime">Kelime</option>
+                            <option value="deyim">Deyim / Ünlem</option>
+                            <option value="atasozu">Nesne / Araç / Doğa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Köy / Yöre</label>
+                        <select id="add-village" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500">
+                            <option value="Gölbaşı Genel">Gölbaşı Genel</option>
+                            <option value="Gölbaşı Merkez">Gölbaşı Merkez</option>
+                            <option value="Harmanlı">Harmanlı</option>
+                            <option value="Belören">Belören</option>
+                            <option value="Cankara">Cankara</option>
+                            <option value="Yarbaşı">Yarbaşı</option>
+                            <option value="Ozan">Ozan</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Örnek Cümle / Kullanım</label>
+                    <textarea id="add-story" rows="2" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-amber-500"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-lg">İptal</button>
+                    <button type="submit" class="px-4 py-2 bg-amber-800 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg">Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-xl border border-slate-100">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🎮</span>
+                    <h3 class="font-bold text-slate-800 text-base">Sözcük Avı</h3>
+                </div>
+                <button onclick="closeQuizModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <div id="quiz-box" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <script>
+        const initialWords = [
+            { id: 1, word_local: "Abaa", word_standard: "Hayret veya seslenme bildiren yöresel ünlem.", category: "deyim", village: "Gölbaşı Merkez", story: "Abaa, bu ne güzel hava böyle!" },
+            { id: 2, word_local: "Abinne", word_standard: "Yorgan dikiminde kullanılan kalın yorgan iğnesi.", category: "atasozu", village: "Belören", story: "Abinneyi ver de sökülen yorganı dikeyim." },
+            { id: 3, word_local: "Aboovv", word_standard: "Şaşkınlık, hayret ve korku belirten ünlem.", category: "deyim", village: "Gölbaşı Genel", story: "Aboovv, bu borç altından nasıl kalkacağız!" },
+            { id: 4, word_local: "Abtır", word_standard: "Tek ayak üzerinde sekerek ilerlemek, seksek oynamak.", category: "kelime", village: "Harmanlı", story: "Çocuklar sokakta abtır oynuyor." },
+            { id: 5, word_local: "Abuat", word_standard: "Her şeye aklı eren, çok bilmiş, kurnaz kişi.", category: "kelime", village: "Cankara", story: "Bak şu abuata, hemen de bildi." },
+            { id: 6, word_local: "Acı / Acıcık", word_standard: "Biraz veya azıcık anlamındaki miktar zarfı.", category: "kelime", village: "Gölbaşı Genel", story: "Acı beriye gel de iki lafın belini kıralım." },
+            { id: 7, word_local: "Acır", word_standard: "Yörede salatası ve turşusu yapılan hıta/acur türü salatalık.", category: "atasozu", village: "Harmanlı", story: "Yemek yanına taze acır doğra da yiyelim." },
+            { id: 8, word_local: "Ahdaraca", word_standard: "Tandırda yufka ekmeği çevirmeye yarayan kılıç şeklindeki tahta alet.", category: "atasozu", village: "Belören", story: "Ahdaracayı eline al, yufkayı yakma sakın." },
+            { id: 9, word_local: "Ahane", word_standard: "İşte orada, bak burada anlamında kullanılan gösterme ünlemi.", category: "deyim", village: "Yarbaşı", story: "Ahane anahtar buradaymış, boşuna aradık." },
+            { id: 10, word_local: "Ağı", word_standard: "Zehir, acı şey.", category: "kelime", village: "Gölbaşı Genel", story: "Bu ilacın tadı tıpkı ağı gibi acıymış." },
+            { id: 11, word_local: "Ağdırmak", word_standard: "Binek hayvanının sırtındaki yükün bir tarafa ağır basması.", category: "kelime", village: "Ozan", story: "Yükü iyi bağla, eşeğin sırtında çuval ağdırmasın." },
+            { id: 12, word_local: "Ahkem", word_standard: "Şaka, latife.", category: "kelime", village: "Gölbaşı Merkez", story: "Aman hemen darılma, şurda bir ahkem yaptık." },
+            { id: 13, word_local: "Akıt", word_standard: "Ev yapımı koyu domates veya biber salçası.", category: "atasozu", village: "Harmanlı", story: "Yemeğin salçasını bu akıttan koyalım." },
+            { id: 14, word_local: "Alemeşkere", word_standard: "Herkesin gözü önünde, gizlemeden, güpegündüz.", category: "deyim", village: "Gölbaşı Genel", story: "Alemeşkere ortalıkta dolaşma dedik o kadar." },
+            { id: 15, word_local: "Alamyon", word_standard: "Alüminyum kap kacak.", category: "atasozu", village: "Belören", story: "Bütün alamyon kapları parlatmışlar." },
+            { id: 16, word_local: "Alma", word_standard: "Elma meyvesi.", category: "kelime", village: "Gölbaşı Genel", story: "Bahçedeki ağaçtan taze alma toplayıp getirdik." },
+            { id: 17, word_local: "Allef", word_standard: "Tahılın, ekinin içine karışan yabani ot tohumları.", category: "kelime", village: "Cankara", story: "Buğdayın içindeki allefi iyice ayıklamak lazım." },
+            { id: 18, word_local: "Ammi", word_standard: "Amca.", category: "kelime", village: "Gölbaşı Merkez", story: "Ammi, bize de biraz bahşiş ver gardaşım!" },
+            { id: 19, word_local: "Ap ağ", word_standard: "Bembeyaz.", category: "kelime", village: "Gölbaşı Genel", story: "Kar yağınca ortalık ap ağ oldu." },
+            { id: 20, word_local: "Aparmak", word_standard: "Alıp götürmek, yürütmek.", category: "kelime", village: "Gölbaşı Genel", story: "Bizim bahçedeki elmaları kim aparmış?" },
+            { id: 21, word_local: "Apırcın olmak", word_standard: "Bir malını kaybedip büyük bir telaşla aramak.", category: "deyim", village: "Yarbaşı", story: "Cüzdanı bulamayınca apırcın oldu adam." },
+            { id: 22, word_local: "Arıstak", word_standard: "Evlerin tavan kısmı, tavan kirişleri.", category: "atasozu", village: "Harmanlı", story: "Arıstaktan sesler geliyor, kedi olmasın sakın." },
+            { id: 23, word_local: "Arısili", word_standard: "Tertemiz, lekesiz, pürüzsüz.", category: "kelime", village: "Gölbaşı Merkez", story: "Evi öyle bir temizlemiş ki arısili olmuş." },
+            { id: 24, word_local: "Asbap", word_standard: "Kıyafet, giysi, elbise.", category: "kelime", village: "Gölbaşı Genel", story: "Bayramlık asbaplarını erkenden hazırladı." },
+            { id: 25, word_local: "Attüz", word_standard: "Köy evlerinin alt katında yer alan gömme ahır.", category: "atasozu", village: "Belören", story: "Attüzdeki ineklerin sesi yukarıdan duyuluyor." },
+            { id: 26, word_local: "Balcan", word_standard: "Patlıcan.", category: "atasozu", village: "Harmanlı", story: "Bugün tandırda közlenmiş balcan yiyeceğiz." },
+            { id: 27, word_local: "Bastık", word_standard: "İncecik serilerek kurutulan üzüm pestili.", category: "atasozu", village: "Harmanlı", story: "Kışlıklar arasına biraz da cevizli bastık koyduk." },
+            { id: 28, word_local: "Bayak", word_standard: "Demin, az önce.", category: "kelime", village: "Gölbaşı Genel", story: "Bayak buradaydı, nereye gitti acep?" },
+            { id: 29, word_local: "Bebo", word_standard: "Erkek kardeş, dost, yakın arkadaş için kullanılan hitap.", category: "deyim", village: "Gölbaşı Merkez", story: "Nasılsın bebo, işler nasıl gidiyor?" },
+            { id: 30, word_local: "Beremer", word_standard: "Beraber, birlikte.", category: "kelime", village: "Cankara", story: "Yarın birlikte beremer gideriz." },
+            { id: 31, word_local: "Berk", word_standard: "Sağlam, sıkı.", category: "kelime", village: "Gölbaşı Genel", story: "İpi pek berk bağla, rüzgarda kopmasın." },
+            { id: 32, word_local: "Bıhçı", word_standard: "Testere.", category: "atasozu", village: "Ozan", story: "Bıhçıyı getir de şu odunu ortadan keselim." },
+            { id: 33, word_local: "Bibi", word_standard: "Hala, babanın kız kardeşi.", category: "kelime", village: "Gölbaşı Genel", story: "Yarın bibimler bize misafirliğe gelecek." },
+            { id: 34, word_local: "Bıldır", word_standard: "Geçen yıl, bir önceki sene.", category: "kelime", village: "Belören", story: "Bıldır bu zamanlar çok kar yağmıştı." },
+            { id: 35, word_local: "Bu gadek", word_standard: "Bu kadar.", category: "kelime", village: "Gölbaşı Genel", story: "Ekmek bu gadek mi kaldı, hemen yeni yufka yapalım." },
+            { id: 36, word_local: "Câra", word_standard: "Sigara.", category: "kelime", village: "Gölbaşı Genel", story: "Şu cârayı içmeyi bir bırakabilse." },
+            { id: 37, word_local: "Cardın", word_standard: "Büyük tarla faresi, lağım faresi.", category: "kelime", village: "Yarbaşı", story: "Ekinliğe cardınlar girmiş, mahvetmiş." },
+            { id: 38, word_local: "Cıncık", word_standard: "Cam veya cam parçası.", category: "atasozu", village: "Gölbaşı Genel", story: "Yerdeki cıncıklara dikkat et, ayağına batmasın." },
+            { id: 39, word_local: "Culluk", word_standard: "Hindi.", category: "atasozu", village: "Harmanlı", story: "Bahçedeki culluklar yine kabardı." },
+            { id: 40, word_local: "Curun", word_standard: "Üzüm veya dut ezilen, taştan oyulmuş büyük tekne.", category: "atasozu", village: "Harmanlı", story: "Eskiden bağ bozümünde curun kullanılırdı." },
+            { id: 41, word_local: "Çağa", word_standard: "Bebek, küçük çocuk.", category: "kelime", village: "Gölbaşı Genel", story: "Uykusu gelmiş, çağayı uyutun artık." },
+            { id: 42, word_local: "Çapıt", word_standard: "Bez ya da kumaş parçası.", category: "kelime", village: "Gölbaşı Genel", story: "Eski çapıtları topla da sobayı tutuşturalım." },
+            { id: 43, word_local: "Çırtikli", word_standard: "Aşırı süslü, gösterişli giyinmeyi seven.", category: "kelime", village: "Gölbaşı Merkez", story: "Düğüne öyle bir çırtikli giyinip gelmiş ki." },
+            { id: 44, word_local: "Çömçe", word_standard: "Yemek kepçesi.", category: "atasozu", village: "Gölbaşı Genel", story: "Çömçeyi tencereye batırıp çorbayı karıştır." },
+            { id: 45, word_local: "Daarmen", word_standard: "Değirmen.", category: "atasozu", village: "Gölbaşı Genel", story: "Buğdayı daarmene götürüp un öğütleces." },
+            { id: 46, word_local: "Dağme", word_standard: "Topaç.", category: "kelime", village: "Gölbaşı Genel", story: "Çocukluğumuzda toprak sokaklarda dağme çevirirdik." },
+            { id: 47, word_local: "Depik", word_standard: "Tekme.", category: "kelime", village: "Gölbaşı Genel", story: "Eşek arkasına doğru sert bir depik attı." },
+            { id: 48, word_local: "Enik", word_standard: "Köpek veya kedi yavrusu.", category: "kelime", village: "Gölbaşı Genel", story: "Köpeğin minik enikleri pek tatlı olmuş." },
+            { id: 49, word_local: "Ergi", word_standard: "Eğri.", category: "kelime", village: "Gölbaşı Genel", story: "Bu sopa niye böyle ergi duruyor, düzelt şunu." },
+            { id: 50, word_local: "Essah", word_standard: "Gerçek, sahi.", category: "kelime", village: "Gölbaşı Genel", story: "Anlattıkların essah mı yoksa şaka mı?" },
+            { id: 51, word_local: "Evermek", word_standard: "Evlendirmek.", category: "kelime", village: "Gölbaşı Genel", story: "Büyük oğlanı bu yaz Allah'ın izniyle everecegiz." },
+            { id: 52, word_local: "Fenikmek", word_standard: "Başı dönmek.", category: "kelime", village: "Gölbaşı Genel", story: "Sıcakta çok kalınca başım fenikmeye başladı." },
+            { id: 53, word_local: "Fermide", word_standard: "Acele bir şekilde, telaşla koşturarak.", category: "deyim", village: "Belören", story: "Nereye böyle fermide koşturuyorsun?" },
+            { id: 54, word_local: "Ferik", word_standard: "Piliç, genç tavuk.", category: "atasozu", village: "Cankara", story: "Kümesteki feriklerden biri yumurtlamış." },
+            { id: 55, word_local: "Ferikmek", word_standard: "Şaşırmak.", category: "kelime", village: "Gölbaşı Genel", story: "Olayı duyunca birden ferikiverdi, ne yapacağını bilemedi." },
+            { id: 56, word_local: "Gırbıs", word_standard: "Biber veya bazı köylerde karpuz.", category: "atasozu", village: "Harmanlı", story: "Tarladan taze gırbıs toplayıp getirdim." },
+            { id: 57, word_local: "Gülle", word_standard: "Misket.", category: "kelime", village: "Gölbaşı Genel", story: "Çocuklar toprakta gülle oyunu oynuyor." },
+            { id: 58, word_local: "Gundi", word_standard: "Köylü, safdil kimse.", category: "kelime", village: "Gölbaşı Genel", story: "Bizim gundi yine saf saf bakıyor." },
+            { id: 59, word_local: "Gın gırısaķ", word_standard: "Tek ayak üzerinde sekerek yürümek.", category: "kelime", village: "Harmanlı", story: "Çocuklar sokakta gın gırısaķ oynuyor." },
+            { id: 60, word_local: "Habbe", word_standard: "Tane, yemiş veya üzüm tanesi.", category: "kelime", village: "Gölbaşı Genel", story: "Salkımda tek bir habbe bile kalmamış." },
+            { id: 61, word_local: "Hangil", word_standard: "Yoğurt, süt veya su konulan büyük kova.", category: "atasozu", village: "Gölbaşı Genel", story: "Hangili doldur da eve su taşıyalım." },
+            { id: 62, word_local: "Hel", word_standard: "Hele edatının yöre ağzında kısalmış hali.", category: "deyim", village: "Gölbaşı Genel", story: "Hel bir dur, ne oluyor dinleyelim." },
+            { id: 63, word_local: "Herif", word_standard: "Koca, erkek.", category: "kelime", village: "Gölbaşı Genel", story: "Bizim herif yine tarladan geç geldi." },
+            { id: 64, word_local: "Hıldır çıldır", word_standard: "Şöyle böyle, eh işte, idare eder durumu.", category: "deyim", village: "Gölbaşı Merkez", story: "İşler hıldır çıldır gidiyor işte." },
+            { id: 65, word_local: "Hıyar", word_standard: "Salatalık.", category: "kelime", village: "Gölbaşı Genel", story: "Tarladan taze hıyar koparıp yıka da yiyelim." },
+            { id: 66, word_local: "Hıta", word_standard: "Acura benzeyen ve acurdan daha uzun/ince yiyecek.", category: "atasozu", village: "Gölbaşı Genel", story: "Hıtanın turşusu bu sıcaklarda çok güzel gider." },
+            { id: 67, word_local: "Irbık", word_standard: "İbrik.", category: "atasozu", village: "Gölbaşı Genel", story: "Irbığı al da abdest alalım." },
+            { id: 68, word_local: "Ketlek", word_standard: "Bu kadar, şu miktar sınırlandırması.", category: "kelime", village: "Belören", story: "Ketlek ekmek bana yeter de artar bile." },
+            { id: 69, word_local: "Kıncik", word_standard: "Köşe, kenar, odanın kuytu köşesi.", category: "kelime", village: "Gölbaşı Genel", story: "Evin kınciğini de iyice süpürün." },
+            { id: 70, word_local: "Komeç", word_standard: "Sac üzerinde pişirilen kalınca ekmek, bazlama.", category: "atasozu", village: "Belören", story: "Sıcak komeçin üzerine tereyağı sür." },
+            { id: 71, word_local: "Kudümlü", word_standard: "Hayırlı, uğurlu.", category: "kelime", village: "Gölbaşı Genel", story: "Bu çocuk çok kudümlü doğdu, baksana yüzüne." },
+            { id: 72, word_local: "Kuşak", word_standard: "Kemer.", category: "kelime", village: "Gölbaşı Genel", story: "Şalvarın kuşağını sıkı bağla düşmesin." },
+            { id: 73, word_local: "Kuttik", word_standard: "Kısa boylu, bodur nesne veya insan.", category: "kelime", village: "Gölbaşı Genel", story: "Şu kuttik tabureyi ortaya ver." },
+            { id: 74, word_local: "Küncü", word_standard: "Susam.", category: "atasozu", village: "Harmanlı", story: "Simidin üzerine bolca küncü serpmişler." },
+            { id: 75, word_local: "Lappıdak", word_standard: "Birdenbire.", category: "kelime", village: "Gölbaşı Genel", story: "Yağmur lappıdak üzerimize yağıverdi." },
+            { id: 76, word_local: "Loğ", word_standard: "Toprak damları sıkıştırmakta kullanılan silindir taş.", category: "atasozu", village: "Belören", story: "Yağmurdan önce damı loğlamak lazım." },
+            { id: 77, word_local: "Lottik", word_standard: "Hayvanların arkaya doğru attığı çift ayak tekme.", category: "kelime", village: "Ozan", story: "Eşek bir lottik attı, zor kaçtım." },
+            { id: 78, word_local: "Manca", word_standard: "Közlenmiş biber ve patlıcanla yapılan salata.", category: "atasozu", village: "Gölbaşı Merkez", story: "Akşam yemeğine güzel bir manca yaptık." },
+            { id: 79, word_local: "Maskan", word_standard: "Evlerdeki kiler odası, erzak deposu.", category: "atasozu", village: "Harmanlı", story: "Maskandaki turşu küplerini kontrol et." },
+            { id: 80, word_local: "Melefe", word_standard: "Üzerine pestil serilip kurutulan bez.", category: "atasozu", village: "Gölbaşı Genel", story: "Melefe üzerine serilen bastıklar iyice kurudu." },
+            { id: 81, word_local: "Mıh", word_standard: "Çivi.", category: "atasozu", village: "Gölbaşı Genel", story: "Tahtayı tutturmak için şuraya iki tane mıh çak." },
+            { id: 82, word_local: "Nacak", word_standard: "Küçük el baltası.", category: "atasozu", village: "Gölbaşı Genel", story: "Nacakla odunları tahta boyuna böl." },
+            { id: 83, word_local: "Nezzik", word_standard: "Nazik.", category: "kelime", village: "Gölbaşı Genel", story: "Pek nezzik bir çocuk, kimseyi incitmez." },
+            { id: 84, word_local: "Ortancıl", word_standard: "Ortanca.", category: "kelime", village: "Gölbaşı Genel", story: "Ortancıl çocuk okulunu başarıyla bitirdi." },
+            { id: 85, word_local: "Ökünmek", word_standard: "Taklit etmek.", category: "kelime", village: "Gölbaşı Genel", story: "Başkalarının hareketine ökünmek ayıptır." },
+            { id: 86, word_local: "Örgetleme", word_standard: "Tembih etme.", category: "kelime", village: "Gölbaşı Genel", story: "Sana kaç kez örgetledim, kapıyı açık bırakma diye." },
+            { id: 87, word_local: "Össaat", word_standard: "Hemen, derhal.", category: "kelime", village: "Gölbaşı Genel", story: "Dedim ya, össaat buraya geleceksin!" },
+            { id: 88, word_local: "Öteberi", word_standard: "Pazar alışverişi, ev ihtiyaçları malzemesi.", category: "kelime", village: "Gölbaşı Merkez", story: "Pazardan öteberi aldım geldim." },
+            { id: 89, word_local: "Pampık", word_standard: "Pamuk.", category: "atasozu", village: "Gölbaşı Genel", story: "Tarladaki pampıkları toplama vakti geldi." },
+            { id: 90, word_local: "Peşkir", word_standard: "Dokuma havlu, kurulama bezi.", category: "atasozu", village: "Belören", story: "Elimi yıkadım, bana temiz bir peşkir ver." },
+            { id: 91, word_local: "Pin", word_standard: "Kümes, tavukların tünediği yer.", category: "atasozu", village: "Gölbaşı Genel", story: "Tavukları akşam pîne kapatmayı unutmayın." },
+            { id: 92, word_local: "Pisik", word_standard: "Kedi.", category: "kelime", village: "Gölbaşı Genel", story: "Pisik yine sobaya doğru iyice sokuldu." },
+            { id: 93, word_local: "Pöçcik", word_standard: "Kuyruk sokumu, bir şeyin en uç kısmı.", category: "kelime", village: "Gölbaşı Genel", story: "Olayın pöçciğinde kaldık, gerisi gelmedi." },
+            { id: 94, word_local: "Pürçüklü", word_standard: "Havuç.", category: "atasozu", village: "Harmanlı", story: "Çorbaya iki tane de pürçüklü doğra." },
+            { id: 95, word_local: "Sadır", word_standard: "Divan.", category: "atasozu", village: "Gölbaşı Genel", story: "Odanın baş köşesindeki sadıra oturup dinlenelim." },
+            { id: 96, word_local: "Sayfı", word_standard: "Sebze.", category: "atasozu", village: "Gölbaşı Genel", story: "Pazardan taze sayfı alıp eve geçelim." },
+            { id: 97, word_local: "Sehen", word_standard: "Metal veya porselen çukur tabak.", category: "atasozu", village: "Belören", story: "Çorbayı kalaylı sehene doldur oğlum." },
+            { id: 98, word_local: "Seki", word_standard: "İçin edatının yerine kullanılan kelime.", category: "deyim", village: "Gölbaşı Genel", story: "Senin seki özel hazırladım." },
+            { id: 99, word_local: "Sığdıt", word_standard: "Pişirilerek saklanan et, kavurma.", category: "atasozu", village: "Gölbaşı Genel", story: "Kış için hazırladığımız sığdıtları küpten çıkaralım." },
+            { id: 100, word_local: "Süllüm", word_standard: "Duvara dayanarak tırmanılan seyyar merdiven.", category: "atasozu", village: "Gölbaşı Genel", story: "Süllüme çıkarken dikkatli bas kaymasın." },
+            { id: 101, word_local: "Sumsuk", word_standard: "Yumruk.", category: "kelime", village: "Gölbaşı Genel", story: "Sinirlenip masaya bir sumsuk vurdu." },
+            { id: 102, word_local: "Şaart", word_standard: "Çırak.", category: "kelime", village: "Gölbaşı Genel", story: "Dükkandaki şaart ortalığı süpürüverdin mi?" },
+            { id: 103, word_local: "Şoğra", word_standard: "Çorba.", category: "atasozu", village: "Gölbaşı Genel", story: "Sıcak bir şoğra içsek de içimiz ısınsa." },
+            { id: 104, word_local: "Tamatos", word_standard: "Domates.", category: "atasozu", village: "Gölbaşı Genel", story: "Salata için birkaç tane taze tamatos doğra." },
+            { id: 105, word_local: "Teşt", word_standard: "Çamaşır veya hamur yoğurmakta kullanılan geniş leğen.", category: "atasozu", village: "Belören", story: "Hamur için büyük teştide unu dök." },
+            { id: 106, word_local: "Tike", word_standard: "Kuşbaşı büyüklüğünde doğranmış et parçası.", category: "kelime", village: "Gölbaşı Genel", story: "Etleri biraz daha küçük tike doğra." },
+            { id: 107, word_local: "Tiyek", word_standard: "Asma çubuğu, üzüm bağı sırası.", category: "atasozu", village: "Harmanlı", story: "Bahçedeki tiyekleri budama zamanı geldi." },
+            { id: 108, word_local: "Tosbağa", word_standard: "Kaplumbağa.", category: "kelime", village: "Gölbaşı Genel", story: "Bahçede yavaş yavaş yürüyen bir tosbağa gördüm." },
+            { id: 109, word_local: "Yavan", word_standard: "Tatsız, tuzsuz; samimiyetsiz insan.", category: "kelime", village: "Gölbaşı Genel", story: "Çok yavan bir sohbet oldu." },
+            { id: 110, word_local: "Yörep", word_standard: "Yokuş.", category: "kelime", village: "Gölbaşı Genel", story: "Bu yörebi çıkmak adama nefes bırakmıyor." },
+            { id: 111, word_local: "Zibil", word_standard: "Hayvan gübresi veya süprüntü, çöp.", category: "kelime", village: "Gölbaşı Genel", story: "Ahırın zibilini sabah erkenden kaldırdık." }
+        ];
+
+        // Tarayıcı önbelleğini sıfırlamak için yeni versiyon anahtarı kullanıldı
+        let words = JSON.parse(localStorage.getItem('golbasi_words_v3')) || initialWords;
+        let favorites = JSON.parse(localStorage.getItem('golbasi_favs_v3')) || [];
+        let activeCategory = 'all';
+        let activeVillage = 'all';
+        let isOldDedeMode = true;
+
+        function init() {
+            renderGrid(words);
+            document.getElementById('word-count').innerText = `Sözlükteki Toplam Kelime: ${words.length}`;
+        }
+
+        function renderGrid(list) {
+            const grid = document.getElementById('word-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+
+            if (list.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            } else {
+                empty.classList.add('hidden');
+            }
+
+            list.forEach(w => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs hover:shadow-md transition flex flex-col justify-between space-y-3";
+                
+                let catName = "Kelime";
+                if(w.category === 'deyim') catName = "Deyim / Ünlem";
+                if(w.category === 'atasozu') catName = "Nesne / Araç";
+
+                const isFav = favorites.includes(w.id);
+
+                card.innerHTML = `
+                    <div class="space-y-1.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <h3 class="font-bold text-amber-950 text-base">${w.word_local}</h3>
+                                <button onclick="toggleFav(${w.id})" class="text-sm transition ${isFav ? 'text-rose-500' : 'text-slate-300 hover:text-rose-400'}">
+                                    ❤️
+                                </button>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">${catName}</span>
+                                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100/70 text-amber-900">📍 ${w.village || 'Gölbaşı'}</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-700 font-medium">${w.word_standard}</p>
+                        <p class="text-xs text-slate-500 italic bg-amber-50/50 p-2 rounded-lg border border-amber-100/60 font-normal">"${w.story}"</p>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-end">
+                        <button onclick="speakText('${w.word_local}. Anlamı: ${w.word_standard}. ${w.story}')" class="text-xs text-amber-800 hover:text-amber-900 font-semibold flex items-center gap-1">
+                            🔊 Dinle
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function toggleFav(id) {
+            if (favorites.includes(id)) {
+                favorites = favorites.filter(favId => favId !== id);
+            } else {
+                favorites.push(id);
+            }
+            localStorage.setItem('golbasi_favs_v3', JSON.stringify(favorites));
+            filterWords();
+        }
+
+        function toggleVoiceMode() {
+            const icon = document.getElementById('voice-icon');
+            const text = document.getElementById('voice-mode-text');
+            const bannerAvatar = document.getElementById('banner-avatar');
+            const bannerTitle = document.getElementById('banner-title');
+
+            if (isOldDedeMode) {
+                isOldDedeMode = false;
+                icon.innerText = "🗣️";
+                text.innerText = "Ses: Normal Türkçe Modu";
+                bannerAvatar.innerText = "🗣️";
+                bannerTitle.innerText = "Gölbaşı Sözlüğü Anlatıyor";
+            } else {
+                isOldDedeMode = true;
+                icon.innerText = "👴🏼";
+                text.innerText = "Ses: Yaşlı Dede Modu";
+                bannerAvatar.innerText = "👴🏼";
+                bannerTitle.innerText = "Gölbaşı Dedesi Diyor Ki";
+            }
+        }
+
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'tr-TR';
+
+                if (isOldDedeMode) {
+                    utter.rate = 0.8;
+                    utter.pitch = 0.75;
+                } else {
+                    utter.rate = 1.0;
+                    utter.pitch = 1.0;
+                }
+
+                window.speechSynthesis.speak(utter);
+            }
+        }
+
+        function filterWords() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = words.filter(w => {
+                const matchCat = activeCategory === 'all' || 
+                                (activeCategory === 'favs' && favorites.includes(w.id)) || 
+                                w.category === activeCategory;
+                const matchVillage = activeVillage === 'all' || w.village === activeVillage;
+                const matchQuery = w.word_local.toLowerCase().includes(query) || 
+                                  w.word_standard.toLowerCase().includes(query) || 
+                                  (w.village && w.village.toLowerCase().includes(query)) ||
+                                  w.story.toLowerCase().includes(query);
+                return matchCat && matchVillage && matchQuery;
+            });
+            renderGrid(filtered);
+        }
+
+        function setCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.className = "cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-slate-600 border border-slate-200 hover:bg-slate-50";
+            });
+            const btnMap = { all: 'btn-all', favs: 'btn-favs', kelime: 'btn-kelime', deyim: 'btn-deyim', atasozu: 'cat-atasozu' };
+            if (cat === 'favs') {
+                document.getElementById('btn-favs').className = "cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-600 text-white shadow-xs flex items-center gap-1";
+            } else {
+                document.getElementById(btnMap[cat]).className = "cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-900 text-white shadow-xs";
+            }
+            filterWords();
+        }
+
+        function setVillage(v) {
+            activeVillage = v;
+            document.querySelectorAll('.vcat-btn').forEach(btn => {
+                btn.className = "vcat-btn px-2.5 py-1 rounded-md bg-white text-slate-600 border border-slate-200 hover:bg-amber-50";
+            });
+            const vmap = { 'all':'vbtn-all', 'Gölbaşı Merkez':'vbtn-merkez', 'Harmanlı':'vbtn-harmanli', 'Belören':'vbtn-beloren', 'Cankara':'vbtn-cankara', 'Yarbaşı':'vbtn-yarbasi', 'Ozan':'vbtn-ozan' };
+            if(vmap[v]) document.getElementById(vmap[v]).className = "vcat-btn px-2.5 py-1 rounded-md bg-amber-200/80 text-amber-900 font-semibold shadow-xs";
+            filterWords();
+        }
+
+        function openAddModal() { document.getElementById('add-modal').classList.remove('hidden'); }
+        function closeAddModal() { document.getElementById('add-modal').classList.add('hidden'); }
+
+        function handleAddWord(e) {
+            e.preventDefault();
+            const newObj = {
+                id: Date.now(),
+                word_local: document.getElementById('add-local').value.trim(),
+                word_standard: document.getElementById('add-standard').value.trim(),
+                category: document.getElementById('add-category').value,
+                village: document.getElementById('add-village').value,
+                story: document.getElementById('add-story').value.trim() || "Büyüklerimiz bu kelimeyi sıkça kullanırdı."
+            };
+            words.unshift(newObj);
+            localStorage.setItem('golbasi_words_v3', JSON.stringify(words));
+            init();
+            closeAddModal();
+        }
+
+        function openQuizModal() {
+            document.getElementById('quiz-modal').classList.remove('hidden');
+            loadQuiz();
+        }
+        function closeQuizModal() { document.getElementById('quiz-modal').classList.add('hidden'); }
+
+        function loadQuiz() {
+            const box = document.getElementById('quiz-box');
+            if (words.length < 4) {
+                box.innerHTML = `<p class="text-xs text-slate-500">Quiz için en az 4 kelime gereklidir.</p>`;
+                return;
+            }
+
+            const target = words[Math.floor(Math.random() * words.length)];
+            const others = words.filter(w => w.id !== target.id).sort(() => 0.5 - Math.random()).slice(0, 3);
+            const opts = [...others, target].sort(() => 0.5 - Math.random());
+
+            let html = `
+                <div class="bg-amber-50 p-3.5 rounded-xl border border-amber-200 text-center">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-amber-800">Yöresel Sözcük</span>
+                    <h4 class="text-lg font-bold text-amber-950 mt-0.5">${target.word_local}</h4>
+                </div>
+                <div class="space-y-2">
+            `;
+
+            opts.forEach(o => {
+                const isCorrect = o.id === target.id;
+                html += `<button onclick="checkQuiz(this, ${isCorrect})" class="w-full text-left p-3 bg-slate-50 hover:bg-amber-100/60 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 transition">${o.word_standard}</button>`;
+            });
+
+            html += `</div><div id="quiz-msg" class="text-center text-xs font-bold pt-1"></div>`;
+            box.innerHTML = html;
+        }
+
+        function checkQuiz(btn, isCorrect) {
+            const msg = document.getElementById('quiz-msg');
+            if (isCorrect) {
+                btn.className = "w-full text-left p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-bold";
+                msg.innerHTML = "<span class='text-emerald-600'>Aferin çağam, doğru bildin! 🎉</span>";
+            } else {
+                btn.className = "w-full text-left p-3 bg-rose-100 border border-rose-300 text-rose-800 rounded-xl text-xs font-bold";
+                msg.innerHTML = "<span class='text-rose-600'>Bilemedin zaar!</span>";
+            }
+            setTimeout(loadQuiz, 1800);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
